@@ -8,7 +8,7 @@
 // if (!dashboardSheet || !sheet) {
 //   throw new Error("Planilha 'Dashboard' ou 'Aulas Ministradas' não encontrada.");
 // }
-// let dataRange = lessonsSheet.getRange('A4:A' + lessonsSheet.getLastRow());
+// let dataRange = lessonsReportSheet.getRange('A4:A' + lessonsReportSheet.getLastRow());
 // let data = dataRange.getValues();
 // if (!data || data.length === 0) {
 //   throw new Error("Nenhum dado encontrado na planilha 'Aulas Ministradas'.");
@@ -24,18 +24,18 @@
 // function GestaoAlunos() {
 //   // Obtém a planilha ativa
 //   var sheet = SpreadsheetApp.getActiveSpreadsheet();
-//   // Obtém a planilha "Gestão de Alunos"
-//   var planilha = sheet.getSheetByName('Gestão de Alunos');
-//   // Define "Gestão de Alunos" como a planilha ativa
+//   // Obtém a planilha "Registro de Presença"
+//   var planilha = sheet.getSheetByName('Registro de Presença');
+//   // Define "Registro de Presença" como a planilha ativa
 //   SpreadsheetApp.setActiveSheet(planilha);
 // }
 // // Funcional apenas com id nas tabelas
 // function updateRegistroDePagamentos(activeCell, activeValue) {
-//   let studentManagementSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Gestão de Alunos');
+//   let presenceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Presença');
 //   let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Pagamentos');
 //   let activeRow = activeCell.getRow();
 //   let activeColumn = activeCell.getColumn();
-//   let studentName = studentManagementSheet.getRange(activeRow, 1).getValue().trim().toLowerCase();
+//   let studentName = presenceSheet.getRange(activeRow, 1).getValue().trim().toLowerCase();
 //   let paymentData = paymentSheet.getRange('A:H').getValues();
 //   for (let i = 1; i < paymentData.length; i++) {
 //     if (paymentData[i][0].trim().toLowerCase() == studentName) {
@@ -52,20 +52,20 @@
 // }
 // Funcional apenas com id nas tabelas
 // function updateGestaoDeAlunos(activeCell, activeValue) {
-//   let studentManagementSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Gestão de Alunos');
+//   let presenceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Presença');
 //   let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Pagamentos');
 //   let activeRow = activeCell.getRow();
 //   let activeColumn = activeCell.getColumn();
 //   let studentName = paymentSheet.getRange(activeRow, 1).getValue().trim().toLowerCase();
-//   let alunoData = studentManagementSheet.getRange('A:F').getValues();
+//   let alunoData = presenceSheet.getRange('A:F').getValues();
 //   for (let i = 1; i < alunoData.length; i++) {
 //     if (alunoData[i][0].trim().toLowerCase() == studentName) {
 //       if (activeColumn == 1) { // Nome do Aluno
-//         studentManagementSheet.getRange(i + 1, 1).setValue(activeValue);
+//         presenceSheet.getRange(i + 1, 1).setValue(activeValue);
 //       } else if (activeColumn == 2) { // Telefone
-//         studentManagementSheet.getRange(i + 1, 2).setValue(activeValue);
+//         presenceSheet.getRange(i + 1, 2).setValue(activeValue);
 //       } else if (activeColumn == 8) { // Saldo de Aulas
-//         studentManagementSheet.getRange(i + 1, 6).setValue(activeValue);
+//         presenceSheet.getRange(i + 1, 6).setValue(activeValue);
 //       }
 //       break;
 //     }
@@ -74,68 +74,100 @@
 
 // Função para exibir uma mensagem de confirmação ou aviso
 function confirmOperation(activeCell, sheetName, message, duration) {
-  // Obtém a planilha especificada
-  let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  // Obtém a célula para exibir a mensagem (uma coluna à direita da célula especificada)
-  let messageCell = sheet.getRange(activeCell.getRow(), activeCell.getColumn() + 1);
-  // Define o valor da célula para exibir a mensagem
-  messageCell.setValue(message);
-  // Aplica todas as alterações pendentes na planilha
-  SpreadsheetApp.flush();
+  // Tenta executar o bloco de código
+  try {
+    // Obtém a planilha especificada
+    let sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    // Obtém a célula para exibir a mensagem (uma coluna à direita da célula especificada)
+    let messageCell = sheet.getRange(activeCell.getRow(), activeCell.getColumn() + 1);
+    // Define o valor da célula para exibir a mensagem
+    messageCell.setValue(message);
+    // Aplica todas as alterações pendentes na planilha
+    SpreadsheetApp.flush();
 
-  // Se a duração não for 0 executa funções específicas
-  if (duration !== 0) {
-    // Pausa a execução do script pela quantidade de milissegundos especificada
-    Utilities.sleep(duration);
-    // Limpa o conteúdo da célula após a pausa
-    messageCell.clearContent();
+    // Se a duração não for 0 executa funções específicas
+    if (duration !== 0) {
+      // Pausa a execução do script pela quantidade de milissegundos especificada
+      Utilities.sleep(duration);
+      // Limpa o conteúdo da célula após a pausa
+      messageCell.clearContent();
+    }
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   }
 }
 
 // Função para obter a linha de um aluno pelo nome
 function getStudentRowByName(testName, sheet) {
-  // Obtém uma lista com todos os nomes da coluna especificada
-  let currentNames = sheet.getRange('A:A').getValues();
+  // Tenta executar o bloco de código
+  try {
+    // Obtém uma lista com todos os nomes da coluna especificada
+    let currentNames = sheet.getRange('A:A').getValues();
 
-  // Itera pelos nomes na lista
-  for (let i = 0; i < currentNames.length; i++) {
-    // Obtém um nome da lista, remove espaços extras e converte para minúsculas
-    let currentName = String(currentNames[i]).trim().toLowerCase();
+    // Itera pelos nomes na lista
+    for (let i = 0; i < currentNames.length; i++) {
+      // Obtém um nome da lista, remove espaços extras e converte para minúsculas
+      let currentName = String(currentNames[i]).trim().toLowerCase();
 
-    // Verifica se o nome atual é igual ao nome especificado
-    if (currentName == testName) {
-      // Se encontrar o nome, retorna a linha do nome
-      return i + 1;
+      // Verifica se o nome atual é igual ao nome especificado
+      if (currentName == testName) {
+        // Se encontrar o nome, retorna a linha do nome
+        return i + 1;
+      }
     }
-  }
 
-  // Se não encontrar o nome, retorna -1
-  return -1;
+    // Se não encontrar o nome, retorna -1
+    return -1;
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
+  }
 }
 
 // Função para garantir que uma linha epecificada existe na planilha
 function ensureRowExists(sheet, row) {
-  // Se a linha é maior que o número máximo de linhas da planilha
-  if (row > sheet.getMaxRows()) {
-    // Insere novas linhas até a linha especificada
-    sheet.insertRowsAfter(sheet.getMaxRows(), row - sheet.getMaxRows());
+  // Tenta executar o bloco de código
+  try {
+    // Se a linha é maior que o número máximo de linhas da planilha
+    if (row > sheet.getMaxRows()) {
+      // Insere novas linhas até a linha especificada
+      sheet.insertRowsAfter(sheet.getMaxRows(), row - sheet.getMaxRows());
+    }
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   }
 }
 
 // Função para registrar um aluno se não encontrado
 function registerStudentIfNotFound(testName, sheet, additionalData = []) {
-  // Obtém a última linha com conteúdo da planilha especificada
-  let lastRow = sheet.getLastRow();
-  // Obtém a nova linha para o novo aluno
-  let newRow = lastRow + 1;
-  // Obtém uma matriz com o nome do aluno e dados adicionais
-  let newStudentData = [testName, ...additionalData];
-  // Garante que a linha especificada existe na planilha especificada
-  ensureRowExists(sheet, newRow);
-  // Insere os valores na nova linha
-  sheet.getRange(newRow, 1, 1, newStudentData.length).setValues([newStudentData]);
-  // Retorna a nova linha
-  return newRow;
+  // Tenta executar o bloco de código
+  try {
+    // Obtém a última linha com conteúdo da planilha especificada
+    let lastRow = sheet.getLastRow();
+    // Obtém a nova linha para o novo aluno
+    let newRow = lastRow + 1;
+    // Obtém uma matriz com o nome do aluno e dados adicionais
+    let newStudentData = [testName, ...additionalData];
+    // Garante que a linha especificada existe na planilha especificada
+    ensureRowExists(sheet, newRow);
+    // Insere os valores na nova linha
+    sheet.getRange(newRow, 1, 1, newStudentData.length).setValues([newStudentData]);
+    // Retorna a nova linha
+    return newRow;
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
+  }
 }
 
 // Função para atualizar o resumo de ingresso de alunos por mês
@@ -148,9 +180,9 @@ function updateAdmissionSummaryByMonth(startRow, startColumn) {
   // Tenta executar o bloco de código
   try {
     // Obtém a planilha de alunos ativa e define o intervalo de dados
-    let studentsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Gestão de Alunos');
+    let presenceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Presença');
     // Obtém o intervalo de dados
-    let dataRange = studentsSheet.getRange('C4:C' + studentsSheet.getLastRow());
+    let dataRange = presenceSheet.getRange('C4:C' + presenceSheet.getLastRow());
     // Obtém os valores do intervalo
     let data = dataRange.getValues();
     // Cria um mapa para armazenar o resumo de ingressos por mês
@@ -164,7 +196,7 @@ function updateAdmissionSummaryByMonth(startRow, startColumn) {
       // Verifica se a data é válida
       if (!isNaN(admissionDate.getTime())) {
         // Gera uma chave no formato 'mês/ano'
-        let monthYearKey = (admissionDate.getMonth() + 1) + '/' + admissionDate.getFullYear();
+        let monthYearKey = ('0' + (admissionDate.getMonth() + 1)).slice(-2) + '/' + admissionDate.getFullYear();
         // Incrementa o contador de ingressos para o mês correspondente
         if (admissionSummaryByMonth[monthYearKey]) {
           // Se a chave já existir, incrementa o valor
@@ -177,11 +209,18 @@ function updateAdmissionSummaryByMonth(startRow, startColumn) {
     });
 
     // Converte o mapa em uma matriz
-    let summaryArray = Object.keys(admissionSummaryByMonth).map(monthYear => [monthYear, admissionSummaryByMonth[monthYear]]);
-    // Ordena a matriz por data
-    summaryArray.sort((a, b) => new Date(a[0].replace('/', '-')).getTime() - new Date(b[0].replace('/', '-')).getTime());
+    let summaryArray = Object.keys(admissionSummaryByMonth).map(monthYear => {
+      let [month, year] = monthYear.split('/');
+      return [new Date(year, month - 1), monthYear, admissionSummaryByMonth[monthYear]];
+    });
 
-    // Obtém a planilha de dashboard e o intervalo alvo
+    // Ordena a matriz por data
+    summaryArray.sort((a, b) => a[0] - b[0]);
+
+    // Remove a coluna de datas, deixando apenas 'mês/ano' e o resumo
+    summaryArray = summaryArray.map(entry => [entry[1], entry[2]]);
+
+    // Obtém a planilha especificada
     let dashboardSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Dashboard');
     // Obtém o intervalo alvo
     let targetRange = dashboardSheet.getRange(startRow, startColumn, summaryArray.length, 2);
@@ -200,6 +239,11 @@ function updateAdmissionSummaryByMonth(startRow, startColumn) {
       // Limpa o conteúdo das células
       clearRange.clearContent();
     }
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   } finally {
     // Libera a trava de script
     lock.releaseLock();
@@ -215,8 +259,8 @@ function updatePaymentSummaryByMonth(startRow, startColumn) {
 
   // Tenta executar o bloco de código
   try {
-    // Obtém a planilha de relatório de pagamentos e define o intervalo de dados
-    let paymentReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Relatório de Pagamentos');
+    // Obtém a planilha especificada e define o intervalo de dados
+    let paymentReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pagamentos Registrados');
     // Obtém o intervalo de dados
     let dataRange = paymentReportSheet.getRange('C4:E' + paymentReportSheet.getLastRow());
     // Obtém os valores do intervalo
@@ -234,7 +278,7 @@ function updatePaymentSummaryByMonth(startRow, startColumn) {
       // Verifica se a data e o valor do pagamento são válidos
       if (!isNaN(paymentDate.getTime()) && !isNaN(paymentValue)) {
         // Obtém uma chave no formato 'mês/ano'
-        let monthYearKey = (paymentDate.getMonth() + 1) + '/' + paymentDate.getFullYear();
+        let monthYearKey = ('0' + (paymentDate.getMonth() + 1)).slice(-2) + '/' + paymentDate.getFullYear();
         // Verifica se a chave já existe no mapa
         if (paymentSummaryByMonth[monthYearKey]) {
           // Se a chave já existir, incrementa o valor
@@ -246,12 +290,19 @@ function updatePaymentSummaryByMonth(startRow, startColumn) {
       }
     });
 
-    // Obtém uma matriz com os valores do mapa
-    let summaryArray = Object.keys(paymentSummaryByMonth).map(monthYear => [monthYear, paymentSummaryByMonth[monthYear]]);
-    // Ordena a matriz por data
-    summaryArray.sort((a, b) => new Date(a[0].replace('/', '-')).getTime() - new Date(b[0].replace('/', '-')).getTime());
+    // Converte o mapa em uma matriz
+    let summaryArray = Object.keys(paymentSummaryByMonth).map(monthYear => {
+      let [month, year] = monthYear.split('/');
+      return [new Date(year, month - 1), monthYear, paymentSummaryByMonth[monthYear]];
+    });
 
-    // Obtém a planilha de dashboard e o intervalo alvo
+    // Ordena a matriz por data
+    summaryArray.sort((a, b) => a[0] - b[0]);
+
+    // Remove a coluna de datas, deixando apenas 'mês/ano' e o resumo
+    summaryArray = summaryArray.map(entry => [entry[1], entry[2]]);
+
+    // Obtém a planilha especificada
     let dashboardSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Dashboard');
     // Obtém o intervalo alvo
     let targetRange = dashboardSheet.getRange(startRow, startColumn, summaryArray.length, 2);
@@ -270,6 +321,11 @@ function updatePaymentSummaryByMonth(startRow, startColumn) {
       // Limpa o conteúdo das células
       clearRange.clearContent();
     }
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   } finally {
     // Libera a trava de script
     lock.releaseLock();
@@ -286,7 +342,7 @@ function updatePaymentSummary(startRow, startColumn) {
   // Tenta executar o bloco de código
   try {
     // Obtém a planilha especificada
-    let paymentReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Relatório de Pagamentos');
+    let paymentReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pagamentos Registrados');
     // Obtém o intervalo de dados
     let dataRange = paymentReportSheet.getRange('A4:E' + paymentReportSheet.getLastRow());
     // Obtém os valores do intervalo
@@ -356,10 +412,10 @@ function updateLessonSummary(startRow, startColumn) {
   // Tenta executar o bloco de código
   try {
     // Obtém a planilha especificada
-    let lessonsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Aulas Ministradas');
+    let lessonsReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Aulas Ministradas');
 
     // Obtém o intervalo de dados
-    let dataRange = lessonsSheet.getRange('A4:A' + lessonsSheet.getLastRow());
+    let dataRange = lessonsReportSheet.getRange('A4:A' + lessonsReportSheet.getLastRow());
     // Obtém os valores do intervalo
     let data = dataRange.getValues();
 
@@ -407,6 +463,11 @@ function updateLessonSummary(startRow, startColumn) {
       // Limpa o conteúdo das células
       clearRange.clearContent();
     }
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   } finally {
     // Libera a trava de script
     lock.releaseLock();
@@ -439,7 +500,6 @@ function registerPayment(activeCell, sheetName) {
       return;
     }
 
-
     // Obtém as células especificadas na linha ativa
     let rangeToCopy = paymentSheet.getRange(activeRow, 1, 1, 3);
     // Obtém a data atual
@@ -470,32 +530,32 @@ function registerPayment(activeCell, sheetName) {
     valuesToCopy.push(summedValue);
 
     // Obtém a planilha especificada
-    let studentManagementSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Gestão de Alunos');
+    let presenceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Presença');
 
     // Obtém o nome do aluno convertido para caracteres minúsculas
     let testName = String(valuesToCopy[0]).trim().toLowerCase();
     // Obtém a linha do aluno pelo nome na planilha especificada
-    let studentRow = getStudentRowByName(testName, studentManagementSheet);
+    let studentRow = getStudentRowByName(testName, presenceSheet);
 
     // Verifica se o aluno não está cadastrado na planilha especificada
     if (studentRow == -1) {
       // Se não encontrar o aluno, registra o aluno
-      studentRow = registerStudentIfNotFound(testName, studentManagementSheet, [valuesToCopy[1], rangeToCopy.getValues()[0][2], false, '', counterValue]);
+      studentRow = registerStudentIfNotFound(String(valuesToCopy[0]), presenceSheet, [valuesToCopy[1], rangeToCopy.getValues()[0][2], false, '', counterValue]);
       // Define a célula especificada como um checkbox
-      studentManagementSheet.getRange(studentRow, 4).insertCheckboxes();
+      presenceSheet.getRange(studentRow, 4).insertCheckboxes();
     }
 
     // Obtém a planilha especificada
-    let reportPaymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Relatório de Pagamentos');
+    let paymentReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pagamentos Registrados');
     // Obtém a última linha com conteúdo da planilha especificada
-    let lastRow = reportPaymentSheet.getLastRow();
+    let lastRow = paymentReportSheet.getLastRow();
     // Garante que a linha especificada existe na planilha especificada
-    ensureRowExists(reportPaymentSheet, lastRow + 2);
+    ensureRowExists(paymentReportSheet, lastRow + 2);
     // Insere os valores na próxima linha disponível na planilha especificada
-    reportPaymentSheet.getRange(lastRow + 1, 1, 1, valuesToCopy.length).setValues([valuesToCopy]);
+    paymentReportSheet.getRange(lastRow + 1, 1, 1, valuesToCopy.length).setValues([valuesToCopy]);
 
     // Define o valor nas células especificadas
-    studentManagementSheet.getRange(studentRow, 6).setValue(summedValue);
+    presenceSheet.getRange(studentRow, 6).setValue(summedValue);
     counterCell.setValue(summedValue);
     // Zera os valores das células de pagamento
     paymentSheet.getRange(activeRow, 4, 1, 2).setValue(0);
@@ -520,9 +580,9 @@ function registerPresence(activeCell, sheetName) {
     // Obtém a linha da célula ativa
     let activeRow = activeCell.getRow();
     // Obtém a planilha especificada
-    let studentManagementSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Gestão de Alunos');
+    let presenceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Presença');
     // Obtém a célula na coluna especificada na mesma linha que a célula ativa
-    let counterCell = studentManagementSheet.getRange('F' + activeRow);
+    let counterCell = presenceSheet.getRange('F' + activeRow);
     // Obtém o valor da célula convertido para inteiro
     let counterValue = parseInt(counterCell.getValue());
 
@@ -535,7 +595,7 @@ function registerPresence(activeCell, sheetName) {
     }
 
     // Obtém as células especificadas na linha ativa
-    let rangeToCopy = studentManagementSheet.getRange(activeRow, 1, 1, 3);
+    let rangeToCopy = presenceSheet.getRange(activeRow, 1, 1, 3);
     // Obtém a data atual
     let currentDate = new Date();
     // Obtém o valor da célula e subtrai 1
@@ -548,36 +608,41 @@ function registerPresence(activeCell, sheetName) {
     valuesToCopy.push(valueToCopyMinusOne);
 
     // Obtém a planilha especificada
-    let paymentRegistrySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Pagamentos');
+    let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Pagamentos');
     // Obtém o nome do aluno convertido para caracteres minúsculas
     let testName = String(valuesToCopy[0]).trim().toLowerCase();
     // Obtém a linha do aluno pelo nome na planilha especificada
-    let rowInPaymentRegistry = getStudentRowByName(testName, paymentRegistrySheet);
+    let rowInPaymentSheet = getStudentRowByName(testName, paymentSheet);
 
     // Verifica se o aluno não está cadastrado na planilha especificada
-    if (rowInPaymentRegistry == -1) {
+    if (rowInPaymentSheet == -1) {
       // Se não encontrar o aluno, registra o aluno
-      rowInPaymentRegistry = registerStudentIfNotFound(testName, paymentRegistrySheet, [valuesToCopy[1], rangeToCopy.getValues()[0][2], 0, 0, false, '', counterValue]);
+      rowInPaymentSheet = registerStudentIfNotFound(String(valuesToCopy[0]), paymentSheet, [valuesToCopy[1], rangeToCopy.getValues()[0][2], 0, 0, false, '', counterValue]);
       // Define a célula especificada como um checkbox
-      paymentRegistrySheet.getRange(rowInPaymentRegistry, 6).insertCheckboxes();
+      paymentSheet.getRange(rowInPaymentSheet, 6).insertCheckboxes();
     }
 
     // Obtém a planilha especificada onde os dados serão colados
-    let taughtLessonsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Aulas Ministradas');
+    let lessonsReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Aulas Ministradas');
     // Obtém a última linha com conteúdo da planilha especificada
-    let lastRow = taughtLessonsSheet.getLastRow();
+    let lastRow = lessonsReportSheet.getLastRow();
     // Garante que a linha especificada existe na planilha especificada
-    ensureRowExists(taughtLessonsSheet, lastRow + 2);
+    ensureRowExists(lessonsReportSheet, lastRow + 2);
     // Insere os valores na próxima linha disponível na planilha especificada
-    taughtLessonsSheet.getRange(lastRow + 1, 1, 1, valuesToCopy.length).setValues([valuesToCopy]);
+    lessonsReportSheet.getRange(lastRow + 1, 1, 1, valuesToCopy.length).setValues([valuesToCopy]);
 
     // Define o valor na celula especificada
-    paymentRegistrySheet.getRange(rowInPaymentRegistry, 8).setValue(valueToCopyMinusOne);
+    paymentSheet.getRange(rowInPaymentSheet, 8).setValue(valueToCopyMinusOne);
     // Decrementa o valor da célula em -1
     counterCell.setValue(valueToCopyMinusOne);
 
     // Exibe mensagem de confirmação
     confirmOperation(activeCell, sheetName, '✅ Presença registrada com sucesso', 1500);
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   } finally {
     // Libera a trava de script
     lock.releaseLock();
@@ -639,21 +704,21 @@ function registerStudent(activeCell, sheetName) {
         additionalPaymentData[5] = optionalLessonQuantityValue;
 
         // Obtém a planilha especificada
-        let reportPaymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Relatório de Pagamentos');
+        let paymentReportSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pagamentos Registrados');
         // Obtém a última linha com conteúdo da planilha especificada
-        let lastRow = reportPaymentSheet.getLastRow();
+        let lastRow = paymentReportSheet.getLastRow();
         // Garante que a linha especificada existe na planilha especificada
-        ensureRowExists(reportPaymentSheet, lastRow + 2);
+        ensureRowExists(paymentReportSheet, lastRow + 2);
 
         // Obtém uma matriz com os dados principais e adicionais de aulas
-        let reportPaymentData = data.slice();
-        reportPaymentData.push(currentDate);
-        reportPaymentData.push(optionalLessonQuantityValue);
-        reportPaymentData.push(optionalLessonAmountValue);
-        reportPaymentData.push(optionalLessonQuantityValue);
+        let paymentReportData = data.slice();
+        paymentReportData.push(currentDate);
+        paymentReportData.push(optionalLessonQuantityValue);
+        paymentReportData.push(optionalLessonAmountValue);
+        paymentReportData.push(optionalLessonQuantityValue);
 
         // Insere os valores na próxima linha disponível na planilha especificada
-        reportPaymentSheet.getRange(lastRow + 1, 1, 1, reportPaymentData.length).setValues([reportPaymentData]);
+        paymentReportSheet.getRange(lastRow + 1, 1, 1, paymentReportData.length).setValues([paymentReportData]);
       } else {
         // Se os valores especificados não forem números maiores que zero, exibe mensagem de aviso
         confirmOperation(activeCell, sheetName, '⚠️ Os valores em C4 e C5 devem ser números maiores que zero', 3000);
@@ -668,19 +733,19 @@ function registerStudent(activeCell, sheetName) {
     let paymentData = [data.concat(additionalPaymentData)];
 
     // Obtém a planilha especificada
-    let studentManagementSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Gestão de Alunos');
+    let presenceSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Presença');
     // Obtém a última linha com conteúdo da planilha especificada
-    let lastStudentRow = studentManagementSheet.getLastRow();
+    let lastStudentRow = presenceSheet.getLastRow();
     // Obtém a próxima linha para inserção de dados
     let targetStudentRow = lastStudentRow + 1;
 
     // Obtém a planilha especificada
-    let paymentRegistrySheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Pagamentos');
+    let paymentSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Registro de Pagamentos');
     // Obtém o nome do aluno convertido para caracteres minúsculas
     let testName = String(data[0]).trim().toLowerCase();
 
     // Verifica se o aluno já está cadastrado
-    if (getStudentRowByName(testName, studentManagementSheet) != -1 || getStudentRowByName(testName, paymentRegistrySheet) != -1) {
+    if (getStudentRowByName(testName, presenceSheet) != -1 || getStudentRowByName(testName, paymentSheet) != -1) {
       // Se houver, exibe mensagem de aviso
       confirmOperation(activeCell, sheetName, '⚠️ Aluno já cadastrado', 3000);
       // Encerra a função, pois foi encontrado duplicata
@@ -688,30 +753,35 @@ function registerStudent(activeCell, sheetName) {
     }
 
     // Obtém a última linha com conteúdo da planilha especificada
-    let lastPaymentRow = paymentRegistrySheet.getLastRow();
+    let lastPaymentRow = paymentSheet.getLastRow();
     // Obtém a próxima linha para inserção de dados
     let targetPaymentRow = lastPaymentRow + 1;
 
     // Garante que a linha especificada existe na planilha especificada
-    ensureRowExists(paymentRegistrySheet, targetPaymentRow);
+    ensureRowExists(paymentSheet, targetPaymentRow);
 
     // Define a célula especificada como um checkbox
-    paymentRegistrySheet.getRange(targetPaymentRow, 6).insertCheckboxes();
+    paymentSheet.getRange(targetPaymentRow, 6).insertCheckboxes();
     // Insere os dados na planilha especificada
-    paymentRegistrySheet.getRange(targetPaymentRow, 1, 1, paymentData[0].length).setValues(paymentData);
+    paymentSheet.getRange(targetPaymentRow, 1, 1, paymentData[0].length).setValues(paymentData);
 
     // Garante que a linha especificada existe na planilha especificada
-    ensureRowExists(studentManagementSheet, targetStudentRow);
+    ensureRowExists(presenceSheet, targetStudentRow);
 
     // Define a célula especificada como um checkbox
-    studentManagementSheet.getRange(targetStudentRow, 4).insertCheckboxes();
+    presenceSheet.getRange(targetStudentRow, 4).insertCheckboxes();
     // Insere os dados na planilha especificada
-    studentManagementSheet.getRange(targetStudentRow, 1, 1, lessonData[0].length).setValues(lessonData);
+    presenceSheet.getRange(targetStudentRow, 1, 1, lessonData[0].length).setValues(lessonData);
 
     // Limpa os dados nas células especificadas
     studentSheet.getRange('C2:C5').clearContent();
     // Exibe mensagem de confirmação
     confirmOperation(activeCell, sheetName, '✅ Aluno registrado com sucesso', 1500);
+  } catch (error) {
+    // Registra o erro no log
+    Logger.log(error);
+    // Encerra a função
+    return;
   } finally {
     // Libera a trava de script
     lock.releaseLock();
@@ -739,31 +809,32 @@ function onEdit() {
     let activeValue = activeCell.getValue();
 
     // Obtém a célula especificada
-    let cellD3 = sheet.getSheetByName('Registro de Alunos').getRange('D3');
+    let cellD4 = sheet.getSheetByName('Registro de Alunos').getRange('D4');
     // Obtém o valor da célula especificada
-    let cellD3value = cellD3.getValue();
+    let cellD4value = cellD4.getValue();
 
     // Verifica se a célula ativa é a célula D3 da planilha especificada e se o valor da célula é verdadeiro
-    if ((reference == 'D3' || reference == 'C2' || reference == 'C3' || reference == 'C4' || reference == 'C5') && sheetName == 'Registro de Alunos' && cellD3value == true) {
+    // if ((reference == 'D3' || reference == 'C2' || reference == 'C3' || reference == 'C4' || reference == 'C5') && sheetName == 'Registro de Alunos' && cellD4value == true) {
+    if (sheetName == 'Registro de Alunos' && cellD4value == true) {
       // Tenta executar o bloco de código
       try {
         // Exibe mensagem de execução
-        confirmOperation(cellD3, sheetName, '⏳ Em andamento...', 0); // '⏳ Registrando novo aluno. Aguarde...'
+        confirmOperation(cellD4, sheetName, '⏳ Em andamento...', 0); // '⏳ Registrando novo aluno. Aguarde...'
         // Chama a função para cadastrar um novo aluno
-        registerStudent(cellD3, sheetName);
+        registerStudent(cellD4, sheetName);
       } catch (error) {
         // Exibe mensagem de erro
-        confirmOperation(cellD3, sheetName, '⚠️ Erro ao registrar aluno, cheque as informações do aluno e tente novamente', 3000);
+        confirmOperation(cellD4, sheetName, '⚠️ Erro ao registrar aluno, cheque as informações do aluno e tente novamente', 3000);
       } finally {
         // Define o valor da célula como falso
-        cellD3.setValue(false);
+        cellD4.setValue(false);
         // Limpa qualquer mensagem no campo
-        confirmOperation(cellD3, sheetName, '', 0);
+        confirmOperation(cellD4, sheetName, '', 0);
       }
     }
 
     // Verifica se a célula ativa está em na coluna D da planilha especificada e se o valor da célula é verdadeiro
-    if ((reference.startsWith('D')) && sheetName == 'Gestão de Alunos' && activeValue == true) {
+    if ((reference.startsWith('D')) && sheetName == 'Registro de Presença' && activeValue == true) {
       // Tenta executar o bloco de código
       try {
         // Exibe mensagem de execução
@@ -807,20 +878,25 @@ function onEdit() {
       }
     }
 
+    // // Obtém a célula especificada
+    // let cellD4 = sheet.getSheetByName('Registro de Alunos').getRange('D4');
+    // // Obtém o valor da célula especificada
+    // let cellD4value = cellD4.getValue();
+
     // Verifica se a célula ativa é a célula A2 da planilha especificada e se o valor da célula é verdadeiro
-    if (reference == 'A2' && sheetName == 'Dashboard' && activeValue == true) {
+    if (reference.startsWith('B') && sheetName == 'Dashboard' && activeValue == true) {
       // Tenta executar o bloco de código
       try {
         // Exibe mensagem de execução
         confirmOperation(activeCell, sheetName, '⏳ Em andamento...', 0); // '⏳ Atualizando Dashboard...'
         // Chama a função para atualizar a tabela de total pago por aluno
-        updatePaymentSummary(4, 11);
+        updatePaymentSummary(4, 20);
         // Chama a função para atualizar a tabela de total de aulas por aluno
-        updateLessonSummary(4, 14);
+        updateLessonSummary(4, 23);
         // Chama a função para atualizar a tabela de total de aulas por mês
-        updatePaymentSummaryByMonth(4, 17);
+        updatePaymentSummaryByMonth(4, 26);
         // Chamada a função para atualizar a tabela de total de ingressos por mês
-        updateAdmissionSummaryByMonth(4, 20);
+        updateAdmissionSummaryByMonth(4, 29);
 
         // Exibe mensagem de confirmação
         confirmOperation(activeCell, sheetName, '✅ Dashboard atualizado', 1500);
@@ -835,7 +911,7 @@ function onEdit() {
       }
     }
     // Funcional apenas com id nas tabelas
-    // if ((reference.startsWith('A') || reference.startsWith('B') || reference.startsWith('F')) && sheetName == 'Gestão de Alunos') {
+    // if ((reference.startsWith('A') || reference.startsWith('B') || reference.startsWith('F')) && sheetName == 'Registro de Presença') {
     //   updateRegistroDePagamentos(activeCell, activeValue);
     // } else if ((reference.startsWith('A') || reference.startsWith('B') || reference.startsWith('H')) && sheetName == 'Registro de Pagamentos') {
     //   updateGestaoDeAlunos(activeCell, activeValue);
